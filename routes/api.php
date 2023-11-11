@@ -15,7 +15,10 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('/registration', RegisterController::class);
     Route::post('/login', LoginController::class);
 });
+
+// Rooms
 Route::resource('/rooms', RoomController::class)->middleware('auth:sanctum');
+Route::post('/rooms/enter/{room}', [RoomController::class, 'enter'])->middleware('auth:sanctum');
 Route::get('/me', MeController::class)->middleware('auth:sanctum');
 
 
