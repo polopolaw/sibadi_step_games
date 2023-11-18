@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
+use App\Models\Step;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -99,10 +100,26 @@ class RoomController extends Controller
         if (!blank($user->rooms)) {
             return response()->json(['message' => "You already in room"], 400);
         }
-        if ($room->capacity === $room->users->count()) {
+        $roomUsersCount = $room->users->count();
+        if ($room->capacity === $roomUsersCount) {
             return response()->json(['message' => "fail, room is full"], 400);
         }
         $user->rooms()->attach($room->id);
+        if ($room->capacity === $roomUsersCount + 1) {
+            $room->refresh();
+            $room->user_order = $room->users->pluck('id')->shuffle()->toArray();
+            $room->save();
+        }
         return response()->json(['message' => "success"]);
+    }
+
+    public function createStep(Room $room, Request $request)
+    {
+        $capacity = count($room->user_order);
+        $currentUserIndex = $capacity % $room->steps->count();
+        if ($room->user_order[$currentUserIndex] === auth()->user()->id) {
+            return $room->steps->create(['data' => $request->get('data')]);
+        }
+        return \response()->json(['message' => 'Not your queue']);
     }
 }

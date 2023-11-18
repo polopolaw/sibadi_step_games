@@ -26,4 +26,9 @@ class Room extends Model
         return $this->belongsToMany(User::class);
     }
 
+    public function steps()
+    {
+        return $this->hasMany(Step::class);
+    }
+
 }

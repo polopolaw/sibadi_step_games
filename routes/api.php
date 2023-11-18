@@ -18,6 +18,7 @@ Route::group(['prefix' => 'auth'], function () {
 
 // Rooms
 Route::group(['prefix' => 'rooms', 'middleware' => 'auth:sanctum'], function () {
+    Route::post('{room}/step', [RoomController::class, 'createStep']);
     Route::resource('/', RoomController::class);
     Route::post('/enter/{room}', [RoomController::class, 'enter']);
     Route::post('/leave/{room}', [RoomController::class, 'leave']);
