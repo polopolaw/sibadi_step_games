@@ -13,6 +13,10 @@ class Room extends Model
     const STATUS_PLAYING = 'active';
     const STATUS_CLOSED = 'closed';
 
+    protected $casts = [
+        'user_order' => 'array'
+    ];
+
     protected $fillable = [
         'user_id',
         'type',

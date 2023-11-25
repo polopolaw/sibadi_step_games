@@ -22,6 +22,7 @@ Route::group(['prefix' => 'rooms', 'middleware' => 'auth:sanctum'], function () 
     Route::resource('/', RoomController::class);
     Route::post('/enter/{room}', [RoomController::class, 'enter']);
     Route::post('/leave/{room}', [RoomController::class, 'leave']);
+    Route::get('/get-updates/{room}', [RoomController::class, 'getUpdates']);
 });
 
 Route::get('/me', MeController::class)->middleware('auth:sanctum');

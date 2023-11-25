@@ -107,6 +107,7 @@ class RoomController extends Controller
         $user->rooms()->attach($room->id);
         if ($room->capacity === $roomUsersCount + 1) {
             $room->refresh();
+            $room->status = Room::STATUS_PLAYING;
             $room->user_order = $room->users->pluck('id')->shuffle()->toArray();
             $room->save();
         }
@@ -116,10 +117,27 @@ class RoomController extends Controller
     public function createStep(Room $room, Request $request)
     {
         $capacity = count($room->user_order);
-        $currentUserIndex = $capacity % $room->steps->count();
+        if ($room->steps->count() === 0) {
+            $currentUserIndex = 0;
+        } else {
+            if ($capacity > $room->steps->count()) {
+                $currentUserIndex = $capacity % $room->steps->count();
+            } else {
+                $currentUserIndex = $room->steps->count() % $capacity;
+            }
+        }
+        dd($currentUserIndex);
         if ($room->user_order[$currentUserIndex] === auth()->user()->id) {
-            return $room->steps->create(['data' => $request->get('data')]);
+            return $room->steps()->create(['data' => $request->get('data')]);
         }
         return \response()->json(['message' => 'Not your queue']);
+    }
+
+    public function getUpdates(Room $room, Request $request)
+    {
+        return [
+            'count' => $room->steps->count(),
+            'steps' => $room->steps()->orderBy('created_at', 'desc')->limit(5)->get()
+        ];
     }
 }
