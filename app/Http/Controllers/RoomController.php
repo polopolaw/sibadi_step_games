@@ -117,18 +117,13 @@ class RoomController extends Controller
     public function createStep(Room $room, Request $request)
     {
         $capacity = count($room->user_order);
-        if ($room->steps->count() === 0) {
-            $currentUserIndex = 0;
-        } else {
-            if ($capacity > $room->steps->count()) {
-                $currentUserIndex = $capacity % $room->steps->count();
-            } else {
-                $currentUserIndex = $room->steps->count() % $capacity;
-            }
-        }
-        dd($currentUserIndex);
+        $currentUserIndex = $room->steps->count() % $capacity;
+
         if ($room->user_order[$currentUserIndex] === auth()->user()->id) {
-            return $room->steps()->create(['data' => $request->get('data')]);
+            return $room->steps()->create([
+                'data' => $request->get('data'),
+                'user_id' => auth()->user()->id
+            ]);
         }
         return \response()->json(['message' => 'Not your queue']);
     }
@@ -137,7 +132,10 @@ class RoomController extends Controller
     {
         return [
             'count' => $room->steps->count(),
-            'steps' => $room->steps()->orderBy('created_at', 'desc')->limit(5)->get()
+            'steps' => $room->steps()->wiht('user:id')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get()
         ];
     }
 }
