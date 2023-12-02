@@ -25,6 +25,7 @@ Route::group(['prefix' => 'rooms', 'middleware' => 'auth:sanctum'], function () 
     Route::get('/get-updates/{room}', [RoomController::class, 'getUpdates']);
 });
 
+
 Route::get('/me', MeController::class)->middleware('auth:sanctum');
 
 
