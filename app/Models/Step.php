@@ -10,4 +10,8 @@ class Step extends Model
     use HasFactory;
 
     protected $fillable = ['data'];
+
+    public function user(){
+        return $this->belongsTo(User::class);
+    }
 }
