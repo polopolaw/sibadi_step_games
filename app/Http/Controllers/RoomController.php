@@ -17,9 +17,13 @@ class RoomController extends Controller
      */
     public function index(Request $request)
     {
-        return Room::where('type', $request->get('type'))
-            ->latest()
+        return Room::latest()
+            ->when($request->has('type'), function ($q) use($request){
+                $q->where('type', $request->get('type'));
+            })
+            ->where('status', 'waiting')
             ->paginate(20);
+
     }
 
     /**
