@@ -15,9 +15,15 @@ class RoomController extends Controller
      *
      * @return Response
      */
-    public function index(Request $request)
+    public function index(Request $request, Room $room)
     {
-        return Room::where('type', $request->get('type'))->latest()->paginate(20);
+        return Room::latest()
+            ->when($request->has('type'), function ($q) use ($request) {
+                $q->where('type', $request->get('type'));
+            })
+            ->where('status', 'waiting') // Условие по статусу
+            ->paginate(20);
+
     }
 
     /**
@@ -39,11 +45,11 @@ class RoomController extends Controller
         }
 
         $newRoom = Room::create([
-                                    'name' => $name,
-                                    'capacity' => $capacity,
-                                    'type' => $type,
-                                    'user_id' => $user->id
-                                ]);
+            'name' => $name,
+            'capacity' => $capacity,
+            'type' => $type,
+            'user_id' => $user->id
+        ]);
         $user->rooms()->attach($newRoom->id);
 
         return response()->json(['message' => 'Комната создана успешно', 'room' => $newRoom], 201);
@@ -92,7 +98,8 @@ class RoomController extends Controller
         return Room::where('id', $id)->delete();
     }
 
-    public function enter(Room $room) {
+    public function enter(Room $room)
+    {
         $user = auth()->user();
         if ($room->status !== Room::STATUS_WAITING) {
             return response()->json(['message' => "Room started or closed"], 400);
@@ -117,18 +124,14 @@ class RoomController extends Controller
     public function createStep(Room $room, Request $request)
     {
         $capacity = count($room->user_order);
-        if ($room->steps->count() === 0) {
-            $currentUserIndex = 0;
-        } else {
-            if ($capacity > $room->steps->count()) {
-                $currentUserIndex = $capacity % $room->steps->count();
-            } else {
-                $currentUserIndex = $room->steps->count() % $capacity;
-            }
-        }
-        dd($currentUserIndex);
+        $currentUserIndex = $room->steps->count() % $capacity;
+
         if ($room->user_order[$currentUserIndex] === auth()->user()->id) {
-            return $room->steps()->create(['data' => $request->get('data')]);
+            return $room->steps()
+                ->create([
+                                'data' => $request->get('data'),
+                                'user_id' => auth()->user()->id,
+                ]);
         }
         return \response()->json(['message' => 'Not your queue']);
     }
@@ -137,7 +140,11 @@ class RoomController extends Controller
     {
         return [
             'count' => $room->steps->count(),
-            'steps' => $room->steps()->orderBy('created_at', 'desc')->limit(5)->get()
+            'steps' => $room->steps()
+                ->with('user:id')
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get()
         ];
     }
 }
